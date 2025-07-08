@@ -4,10 +4,12 @@ namespace App\Controller;
 
 use App\Repository\VoitureRepository;
 use App\Entity\Voiture;
+use App\Form\VoitureForm;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\Request;
 
 class VoitureController extends AbstractController
 {
@@ -30,7 +32,7 @@ class VoitureController extends AbstractController
         ]);
     }
     // Page de détail d'une voiture
-    #[Route('/voiture/{id}', name: 'voiture_detail')]
+    #[Route('/voiture/{id}', name: 'voiture_detail', requirements: ['id' => '\d+'])]
     public function detail(Voiture $voiture): Response
     {
         return $this->render('voiture.html.twig', [
@@ -51,5 +53,28 @@ class VoitureController extends AbstractController
         $this->entityManager->flush();
 
         return $this->redirectToRoute('accueil');
+    }
+
+    //Ajout d'une voiture
+    #[Route('/voiture/ajout', name: 'voiture_ajout')]
+    public function ajoutVoiture(Request $request): Response
+    {
+        $voiture = new Voiture();
+
+        $form = $this->createForm(VoitureForm::class, $voiture);
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $voiture = $form->getData();
+
+            $this->entityManager->persist($voiture);
+            $this->entityManager->flush();
+
+            return $this->redirectToRoute('voiture_detail', ['id' => $voiture->getId()]);
+        }
+
+        return $this->render('ajout.html.twig', [
+            'form' => $form->createView(), 
+        ]);
     }
 }
